@@ -5,6 +5,7 @@
   :version "0.0.1"
   :serial t
   :components ((:file "src/package")
+	       (:file "src/misc")
 	       (:file "src/reader")
 	       (:file "src/single-line")))
 

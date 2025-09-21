@@ -1,59 +1,17 @@
 (in-package :fast-structured-io)
 
-(defun construct (fn) (funcall fn :construct :init 'arg))
-(defun pos (fn) (funcall fn :pos :ctx 'parser))
-(defun advance (fn) (funcall fn :advance :ctx 'parser))
-(defun read-buffer (fn) (funcall fn :read-buffer :ctx 'parser))
-(defun reset-buffer (fn) (funcall fn :reset-buffer :ctx 'parser))
-(defun next-char (fn) (funcall fn :next-char :ctx 'parser))
-(defun current-char (fn) (funcall fn :current-char :ctx 'parser))
-  
-(defmacro define-single-line (function-name fn-expr)
+(defmacro line-delimited
+    (function-name &key parser-type construct-parser pos advance read-buffer reset-buffer next-char current-char
+		     context-type construct-context on-line on-eof)
   (let ((func-name (symbol-name function-name)))
     `(setf (symbol-function (intern ,func-name))
 	   (lambda (arg)
-	     (let ((parser ,(construct fn-expr)))
-	       (declare (dynamic-extent parser))
-	       (declare (type ,(funcall fn-expr :type) parser))
-	       (labels ((next-event ()
-			  (let* ((start (the fixnum ,(pos fn-expr)))
-				 (current (the character ,(current-char fn-expr))))
-			    (loop do (case current
-				       (#\Return
-					(let ((end (the fixnum ,(pos fn-expr))))
-					  (if (char= #\Linefeed ,(next-char fn-expr))
-					      ,(advance fn-expr))
-					  (return (values :line start end))))
-
-				       (#\Linefeed
-					(let ((end (the fixnum ,(pos fn-expr))))
-					  ,(advance fn-expr)
-					  (return (values :line start end))))
-
-				       (#\Nul
-					(return (values :eof -1 -1)))
-				       
-				       (otherwise (setf current ,(next-char fn-expr))))))))
-		 
-		 (loop do (multiple-value-bind (evt start end) (next-event)
-			    (declare (type symbol evt))
-			    (declare (type fixnum start end))
-
-			    (ecase evt
-			      (:line (format t "line start: ~A end: ~A~%" start end))
-			      (:eof
-			       (format t "eof")
-			       (return)))))))))))
-
-(defmacro define-single-line-2
-    (function-name &key parser-type construct pos advance read-buffer reset-buffer next-char current-char
-		     on-line on-eof)
-  (let ((func-name (symbol-name function-name)))
-    `(setf (symbol-function (intern ,func-name))
-	   (lambda (arg)
-	     (let ((parser (,construct arg)))
+	     (declare (optimize (speed 3) (debug 0) (safety 0)))
+	     (let ((parser (,construct-parser arg))
+		   (context (,construct-context)))
 	       (declare (dynamic-extent parser))
 	       (declare (type ,parser-type parser))
+	       (declare (type ,context-type context))
 	       (labels ((next-event ()
 			  (let* ((start (the fixnum (,pos parser)))
 				 (current (the character (,current-char parser))))
@@ -81,20 +39,51 @@
 			    (declare (type symbol evt))
 			    (declare (type fixnum start end))
 
-			    (ecase evt
-			      (:line (,on-line (,read-buffer parser) start end))
-			      (:eof (,on-eof)
-			       (return)))))))))))
+			    (case evt
+			      (:line
+			       (setf context (,on-line context (,read-buffer parser) start end)))
+			      (:eof
+			       (return (,on-eof context))))))))))))
 
-(defun on-line-nop (buffer start end)
-  (format t "found ~A~%" (subseq buffer start end)))
+(defmacro line-delimited-str (name &key context-type construct-context on-line on-eof)
+  `(line-delimited ,name
+		   :parser-type str-parser :construct-parser str-parser-construct
+		   :pos str-parser-pos :advance str-parser-advance
+		   :read-buffer str-parser-read-buffer :reset-buffer macro->nil
+		   :next-char str-parser-next :current-char str-parser-char
+		   :context-type ,context-type :construct-context ,construct-context :on-line ,on-line :on-eof ,on-eof))
 
-(defun on-eof-nop ()
-  (format t "at end"))
+(line-delimited-str line-delimited-str-noop
+		    :context-type list :construct-context macro->nil :on-line macro->nil :on-eof macro->nil)
 
-(define-single-line-2 simplest-2
-  :parser-type str-parser :construct str-parser-construct-expr
-  :pos str-parser-pos-expr :advance str-parser-advance-expr
-  :read-buffer str-parser-read-buffer-expr :reset-buffer str-parser-reset-buffer-expr
-  :next-char str-parser-next-char :current-char str-parser-current-char
-  :on-line on-line-nop :on-eof on-eof-nop)
+(defmacro supply-zero () 0)
+
+(defmacro increment-lines (lines buffer start end)
+  `(incf ,lines))
+
+(line-delimited-str str-count-lines
+		    :context-type fixnum :construct-context supply-zero
+		    :on-line increment-lines :on-eof identity)
+
+(defmacro create-appender () `(cons nil nil))
+
+(defun list-append (cell to-append)
+  (let ((next-cell (cons to-append nil)))
+    (cond
+      ((cdr cell)
+       (setf (cdr (cdr cell)) next-cell)
+       (setf (cdr cell) next-cell))
+      (t
+       (setf (car cell) next-cell)
+       (setf (cdr cell) next-cell))))
+  cell)
+
+(defmacro append-string (cell buffer start end)
+  `(list-append ,cell (subseq ,buffer ,start ,end)))
+
+(defmacro extract-list (cell)
+  `(car ,cell))
+
+(line-delimited-str line-delimited->str-list
+		    :context-type cons :construct-context create-appender
+		    :on-line append-string :on-eof extract-list)
