@@ -1,4 +1,24 @@
 (in-package :fast-structured-io)
 
-(defmacro macro->nil (&rest args) 'nil)
+(declaim (inline accum-list-init accum-list accum-list-extract))
+
+(defmacro call->nil (&rest args) 'nil)
+(defmacro call->zero (&rest args) '0)
+
+(defun accum-list-init ()
+  (cons nil nil))
+
+(defun accum-list (cell contents)
+  (let ((next-cell (cons contents nil)))
+    (cond
+      ((cdr cell)
+       (setf (cdr (cdr cell)) next-cell)
+       (setf (cdr cell) next-cell))
+      (t
+       (setf (car cell) next-cell)
+       (setf (cdr cell) next-cell)))
+    cell))
+
+(defun accum-list-extract (cell)
+  (car cell))
 

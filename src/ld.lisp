@@ -46,52 +46,50 @@
 			      (:eof
 			       (return (,on-eof context))))))))))))
 
-(defmacro line-delimited-str (name &key context-type construct-context on-line on-eof)
+(defmacro ld-str (name &key (context-type t) construct-context on-line (on-eof 'identity))
   `(line-delimited ,name
 		   :parser-type str-parser :construct-parser str-parser-construct
 		   :pos str-parser-pos :advance str-parser-advance
-		   :read-buffer str-parser-read-buffer :reset-buffer macro->nil
+		   :read-buffer str-parser-read-buffer :reset-buffer call->nil
 		   :next-char str-parser-next :current-char str-parser-char
 		   :context-type ,context-type :construct-context ,construct-context :on-line ,on-line :on-eof ,on-eof))
 
-(line-delimited-str line-delimited-str-noop
-		    :context-type list :construct-context `nil :on-line macro->nil :on-eof macro->nil)
+(ld-str ld-str-noop
+	:context-type list :construct-context (call->nil) :on-line call->nil :on-eof call->nil)
 
 (defmacro increment-lines (lines buffer start end)
   `(incf ,lines))
 
-(line-delimited-str str-count-lines
-		    :context-type fixnum :construct-context 0
-		    :on-line increment-lines :on-eof identity)
+(ld-str ld-str-count-lines
+	:context-type fixnum
+	:construct-context (call->zero)
+	:on-line increment-lines)
 
-(defmacro line-delimited-str->list (name &key (extract 'subseq))
-  (let* ((cell (gensym))
-	 (buffer (gensym))
-	 (start (gensym))
-	 (end (gensym))
-	 (on-line-lambda `(lambda (,cell ,buffer ,start ,end)
-			    (let ((next-cell (cons (,extract ,buffer ,start ,end) nil)))
-			      (cond
-				((cdr ,cell)
-				 (setf (cdr (cdr ,cell)) next-cell)
-				 (setf (cdr ,cell) next-cell))
-				(t
-				 (setf (car ,cell) next-cell)
-				 (setf (cdr ,cell) next-cell))))
-			    ,cell)))
-    
-    `(line-delimited-str ,name
-			 :context-type cons
-			 :construct-context (cons nil nil)
-			 :on-line ,on-line-lambda :on-eof car)))
-    
-(line-delimited-str->list line-delimited->str-list)
+(declaim (inline accum-list-strings accum-list-ints accum-vec-ints))
 
-(defmacro str->int (buf start end)
-  `(parse-integer ,buf :start ,start :end ,end))
+(defun accum-list-strings (cell buffer start end)
+  (accum-list cell (subseq buffer start end)))
 
-(line-delimited-str->list line-delimited->int-list :extract str->int)
-;; to make an int list:
-;; (defun str->int (str start end)
-;;	(parse-integer str :start start :end end))
-;; (line-delimited-str->list line-delimited->int-list :extract str->int)
+(defun accum-list-ints (cell buffer start end)
+  (accum-list cell (parse-integer buffer :start start :end end)))
+
+(defun accum-vec-ints (vec buffer start end)
+  (vector-push-extend (parse-integer buffer :start start :end end) vec)
+  vec)
+
+(ld-str ld-str->list
+	:context-type cons
+	:construct-context (accum-list-init)
+	:on-line accum-list-strings
+	:on-eof accum-list-extract)
+
+(ld-str ld-str->list-ints
+	:context-type cons
+	:construct-context (accum-list-init)
+	:on-line accum-list-ints
+	:on-eof accum-list-extract)
+
+(ld-str ld-str->vec-ints
+	:context-type (vector fixnum *)
+	:construct-context (make-array 0 :element-type 'fixnum :adjustable t :fill-pointer 0)
+	:on-line accum-vec-ints)

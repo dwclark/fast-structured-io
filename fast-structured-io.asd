@@ -7,7 +7,7 @@
   :components ((:file "src/package")
 	       (:file "src/misc")
 	       (:file "src/reader")
-	       (:file "src/single-line")))
+	       (:file "src/ld")))
 
 (asdf:defsystem #:fast-structured-io-tests
   :description "Fast Structured IO Tests"
