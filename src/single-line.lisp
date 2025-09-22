@@ -65,30 +65,31 @@
 		    :context-type fixnum :construct-context supply-zero
 		    :on-line increment-lines :on-eof identity)
 
-(defmacro create-appender () `(cons nil nil))
-
-(defun list-append (cell to-append)
-  (let ((next-cell (cons to-append nil)))
-    (cond
-      ((cdr cell)
-       (setf (cdr (cdr cell)) next-cell)
-       (setf (cdr cell) next-cell))
-      (t
-       (setf (car cell) next-cell)
-       (setf (cdr cell) next-cell))))
-  cell)
-
 (defmacro line-delimited-str->list (name &key (extract 'subseq))
-  (let* ((context (gensym))
+  (let* ((cell (gensym))
 	 (buffer (gensym))
 	 (start (gensym))
 	 (end (gensym))
-	 (on-line-lambda `(lambda (,context ,buffer ,start ,end)
-			    (list-append ,context (,extract ,buffer ,start ,end)))))
+	 (on-line-lambda `(lambda (,cell ,buffer ,start ,end)
+			    (let ((next-cell (cons (,extract ,buffer ,start ,end) nil)))
+			      (cond
+				((cdr ,cell)
+				 (setf (cdr (cdr ,cell)) next-cell)
+				 (setf (cdr ,cell) next-cell))
+				(t
+				 (setf (car ,cell) next-cell)
+				 (setf (cdr ,cell) next-cell))))
+			    ,cell))
+	 (appender `(lambda () (cons nil nil))))
+    
     `(line-delimited-str ,name
 			 :context-type cons
-			 :construct-context create-appender
+			 :construct-context ,appender
 			 :on-line ,on-line-lambda :on-eof car)))
-
+    
 (line-delimited-str->list line-delimited->str-list)
 
+;; to make an int list:
+;; (defun str->int (str start end)
+;;	(parse-integer str :start start :end end))
+;; (line-delimited-str->list line-delimited->int-list :extract str->int)
