@@ -78,12 +78,17 @@
        (setf (cdr cell) next-cell))))
   cell)
 
-(defmacro append-string (cell buffer start end)
-  `(list-append ,cell (subseq ,buffer ,start ,end)))
+(defmacro line-delimited-str->list (name &key (extract 'subseq))
+  (let* ((context (gensym))
+	 (buffer (gensym))
+	 (start (gensym))
+	 (end (gensym))
+	 (on-line-lambda `(lambda (,context ,buffer ,start ,end)
+			    (list-append ,context (,extract ,buffer ,start ,end)))))
+    `(line-delimited-str ,name
+			 :context-type cons
+			 :construct-context create-appender
+			 :on-line ,on-line-lambda :on-eof car)))
 
-(defmacro extract-list (cell)
-  `(car ,cell))
+(line-delimited-str->list line-delimited->str-list)
 
-(line-delimited-str line-delimited->str-list
-		    :context-type cons :construct-context create-appender
-		    :on-line append-string :on-eof extract-list)
