@@ -8,7 +8,7 @@
 	   (lambda (arg)
 	     (declare (optimize (speed 3) (debug 0) (safety 0)))
 	     (let ((parser (,construct-parser arg))
-		   (context (,construct-context)))
+		   (context ,construct-context))
 	       (declare (dynamic-extent parser))
 	       (declare (type ,parser-type parser))
 	       (declare (type ,context-type context))
@@ -41,7 +41,8 @@
 
 			    (case evt
 			      (:line
-			       (setf context (,on-line context (,read-buffer parser) start end)))
+			       (setf context (,on-line context (,read-buffer parser) start end))
+			       (,reset-buffer parser))
 			      (:eof
 			       (return (,on-eof context))))))))))))
 
@@ -54,15 +55,13 @@
 		   :context-type ,context-type :construct-context ,construct-context :on-line ,on-line :on-eof ,on-eof))
 
 (line-delimited-str line-delimited-str-noop
-		    :context-type list :construct-context macro->nil :on-line macro->nil :on-eof macro->nil)
-
-(defmacro supply-zero () 0)
+		    :context-type list :construct-context `nil :on-line macro->nil :on-eof macro->nil)
 
 (defmacro increment-lines (lines buffer start end)
   `(incf ,lines))
 
 (line-delimited-str str-count-lines
-		    :context-type fixnum :construct-context supply-zero
+		    :context-type fixnum :construct-context 0
 		    :on-line increment-lines :on-eof identity)
 
 (defmacro line-delimited-str->list (name &key (extract 'subseq))
@@ -79,12 +78,11 @@
 				(t
 				 (setf (car ,cell) next-cell)
 				 (setf (cdr ,cell) next-cell))))
-			    ,cell))
-	 (appender `(lambda () (cons nil nil))))
+			    ,cell)))
     
     `(line-delimited-str ,name
 			 :context-type cons
-			 :construct-context ,appender
+			 :construct-context (cons nil nil)
 			 :on-line ,on-line-lambda :on-eof car)))
     
 (line-delimited-str->list line-delimited->str-list)
