@@ -1,6 +1,6 @@
 (in-package :fast-structured-io)
 
-(defmacro line-delimited
+(defmacro ld
     (function-name &key parser-type construct-parser pos advance read-buffer reset-buffer next-char current-char
 		     context-type construct-context on-line on-eof)
   (let ((func-name (symbol-name function-name)))
@@ -47,12 +47,12 @@
 			       (return (,on-eof context))))))))))))
 
 (defmacro ld-str (name &key (context-type t) construct-context on-line (on-eof 'identity))
-  `(line-delimited ,name
-		   :parser-type str-parser :construct-parser str-parser-construct
-		   :pos str-parser-pos :advance str-parser-advance
-		   :read-buffer str-parser-read-buffer :reset-buffer call->nil
-		   :next-char str-parser-next :current-char str-parser-char
-		   :context-type ,context-type :construct-context ,construct-context :on-line ,on-line :on-eof ,on-eof))
+  `(ld ,name
+       :parser-type str-parser :construct-parser str-parser-construct
+       :pos str-parser-pos :advance str-parser-advance
+       :read-buffer str-parser-read-buffer :reset-buffer call->nil
+       :next-char str-parser-next :current-char str-parser-char
+       :context-type ,context-type :construct-context ,construct-context :on-line ,on-line :on-eof ,on-eof))
 
 (ld-str ld-str-noop
 	:context-type list :construct-context (call->nil) :on-line call->nil :on-eof call->nil)
