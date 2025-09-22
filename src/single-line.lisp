@@ -6,7 +6,7 @@
   (let ((func-name (symbol-name function-name)))
     `(setf (symbol-function (intern ,func-name))
 	   (lambda (arg)
-	     (declare (optimize (speed 3) (debug 0) (safety 0)))
+	     (declare (optimize (speed 3) (safety 0)))
 	     (let ((parser (,construct-parser arg))
 		   (context ,construct-context))
 	       (declare (dynamic-extent parser))
@@ -87,6 +87,10 @@
     
 (line-delimited-str->list line-delimited->str-list)
 
+(defmacro str->int (buf start end)
+  `(parse-integer ,buf :start ,start :end ,end))
+
+(line-delimited-str->list line-delimited->int-list :extract str->int)
 ;; to make an int list:
 ;; (defun str->int (str start end)
 ;;	(parse-integer str :start start :end end))
