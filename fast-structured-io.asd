@@ -4,6 +4,7 @@
   :license  "Apache 2"
   :version "0.0.1"
   :serial t
+  :depends-on ("alexandria")
   :components ((:file "src/package")
 	       (:file "src/misc")
 	       (:file "src/reader")

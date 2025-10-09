@@ -1,3 +1,3 @@
 (defpackage :fast-structured-io
   (:nicknames :fsio)
-  (:use #:cl))
+  (:use #:cl #:alexandria))
