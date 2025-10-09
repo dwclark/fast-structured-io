@@ -20,6 +20,3 @@
   (declare (type str-parser parser))
   (str-parser-char parser (str-parser-advance parser)))
 
-(defmacro str-parser-construct (x)
-  `(make-str-parser :read-buffer ,x :pos 0))
-
