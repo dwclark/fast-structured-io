@@ -8,6 +8,7 @@
   :components ((:file "src/package")
 	       (:file "src/misc")
 	       (:file "src/reader")
+	       (:file "src/ld-helpers")
 	       (:file "src/ld")))
 
 (asdf:defsystem #:fast-structured-io-tests
