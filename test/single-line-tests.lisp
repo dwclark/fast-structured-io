@@ -15,3 +15,6 @@
     (is (equalp (ld-str->vec-ints str) (make-array 1024 :initial-contents nums)))
     (is (= 1024 (ld-str-count-lines str)))))
 
+(test test-read-numbers-stm
+  (with-open-file (fstream "data/nums.txt")
+    (is (= 1024 (ld-stm-count-lines fstream)))))

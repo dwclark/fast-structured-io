@@ -20,3 +20,35 @@
   (declare (type str-parser parser))
   (str-parser-char parser (str-parser-advance parser)))
 
+(declaim (inline stm-parser-read-buffer stm-parser-pos stm-parser-current stm-parser-move-next stm-parser-reset))
+
+(defstruct stm-parser
+  (read-buffer (make-string 512) :type simple-string)
+  (pos -1 :type fixnum)
+  (stm nil :type stream))
+
+(defun stm-parser-current (parser)
+  (declare (type stm-parser parser))
+  (schar (stm-parser-read-buffer parser) (stm-parser-pos parser)))
+
+(defun stm-resize-read-buffer (parser)
+  (declare (type stm-parser parser))
+  (loop with old of-type simple-string = (stm-parser-read-buffer parser)
+	with new of-type simple-string = (make-string (+ 512 (array-total-size old)))
+	for i from 0 below (array-total-size old)
+	do (setf (schar new i) (schar old i))
+	finally (setf (stm-parser-read-buffer parser) new)))
+
+(defun stm-parser-move-next (parser)
+  (declare (type stm-parser parser))
+  (when (= (1+ (stm-parser-pos parser)) (array-total-size (stm-parser-read-buffer parser)))
+    (stm-resize-read-buffer parser))
+  
+  (incf (stm-parser-pos parser))
+  (setf (schar (stm-parser-read-buffer parser) (stm-parser-pos parser))
+	(read-char (stm-parser-stm parser) nil #\Nul)))
+  
+(defun stm-parser-reset (parser)
+  (declare (type stm-parser parser))
+  (setf (schar (stm-parser-read-buffer parser) 0) (stm-parser-current parser))
+  (setf (stm-parser-pos parser) 0))

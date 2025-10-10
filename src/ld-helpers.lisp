@@ -15,3 +15,7 @@
 (defun buffer-call (spec name context-sym buffer-sym start-sym end-sym)
   (destructuring-bind ((ctx buf start end) &body body) (rest (assoc name spec))
     (replace-symbols body (list ctx buf start end) (list context-sym buffer-sym start-sym end-sym))))
+
+(defun find-type (spec name)
+  (let ((found (rest (assoc name spec))))
+    (if found found 't)))
