@@ -9,7 +9,8 @@
 	       (:file "src/misc")
 	       (:file "src/reader")
 	       (:file "src/mixins")
-	       (:file "src/ld")))
+	       (:file "src/ld")
+	       (:file "src/csv")))
 
 (asdf:defsystem #:fast-structured-io-tests
   :description "Fast Structured IO Tests"

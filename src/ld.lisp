@@ -13,8 +13,8 @@
 		 (declare (type ,(mixin-type spec :parser-type) ,parser))
 		 (declare (type ,(mixin-type spec :context-type) ,context))
 		 (labels ((,next-event ()
-			    (let* ((,start (the fixnum ,(mixin-call spec :pos parser)))
-				   (,current (the character ,(mixin-call spec :current-char parser))))
+			    (let ((,start (the fixnum ,(mixin-call spec :pos parser)))
+				  (,current (the character ,(mixin-call spec :current-char parser))))
 			      (loop do (case ,current
 					 (#\Return
 					  (let ((,end (the fixnum ,(mixin-call spec :pos parser))))
