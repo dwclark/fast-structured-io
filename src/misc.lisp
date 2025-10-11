@@ -2,9 +2,6 @@
 
 (declaim (inline accum-list-init accum-list accum-list-extract))
 
-(defmacro call->nil (&rest args) 'nil)
-(defmacro call->zero (&rest args) '0)
-
 (defun accum-list-init ()
   (cons nil nil))
 

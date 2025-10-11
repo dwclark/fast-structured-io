@@ -16,6 +16,14 @@
   (destructuring-bind ((ctx buf start end) &body body) (rest (assoc name spec))
     (replace-symbols body (list ctx buf start end) (list context-sym buffer-sym start-sym end-sym))))
 
-(defun find-type (spec name)
+(defun mixin-type (spec name)
   (let ((found (rest (assoc name spec))))
-    (if found found 't)))
+    (if found (first found) 't)))
+
+(defun mixin-call (spec name &rest syms)
+  (let* ((found (rest (assoc name spec)))
+	 (arg-list (first found))
+	 (body (first (rest found))))
+    (if (null arg-list)
+	body
+	(replace-symbols body arg-list syms))))
