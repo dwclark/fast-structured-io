@@ -24,6 +24,13 @@
   (let* ((found (rest (assoc name spec)))
 	 (arg-list (first found))
 	 (body (first (rest found))))
-    (if (null arg-list)
-	body
-	(replace-symbols body arg-list syms))))
+    (cond ((null arg-list)
+	   body)
+
+	  ((atom body)
+	   (if (eq body (first arg-list))
+	       (first syms)
+	       body))
+	  
+	  (t
+	   (replace-symbols body arg-list syms)))))

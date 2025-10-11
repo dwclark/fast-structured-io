@@ -46,10 +46,10 @@
 				(:line
 				 (let ((,read-buffer ,(mixin-call spec :read-buffer parser)))
 				   (declare (ignorable ,read-buffer))
-				   (setf ,context ,@(buffer-call spec :on-line context read-buffer start end))
-				   ,@(single-call spec :reset-buffer parser)))
+				   (setf ,context ,(mixin-call spec :on-line context read-buffer start end))
+				   ,(mixin-call spec :reset-buffer parser)))
 				(:eof
-				 (return ,@(single-call spec :on-eof context)))))))))))))
+				 (return ,(mixin-call spec :on-eof context)))))))))))))
 
 (defun noop-functions()
   '((:context-type list)
