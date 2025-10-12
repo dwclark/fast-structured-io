@@ -17,9 +17,12 @@
 	do (setf copy (replace-symbol copy src target))
 	finally (return copy)))
 
-(defun mixin-type (spec name)
+(defun mixin-or-default (spec name default)
   (let ((found (rest (assoc name spec))))
-    (if found (first found) 't)))
+    (if found (first found) default)))
+
+(defun mixin-type (spec name)
+  (mixin-or-default spec name 't))
 
 (defun mixin-call (spec name &rest syms)
   (let* ((found (rest (assoc name spec)))
