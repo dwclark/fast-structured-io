@@ -140,7 +140,7 @@
 				(:escaped-field
 				 (let ((,read-buffer ,(mixin-call spec :read-buffer parser)))
 				   (declare (ignorable ,read-buffer))
-				   (setf ,context ,(mixin-call spec :on-escaped-field context read-buffer evt-start evt-end))
+				   (setf ,context ,(mixin-call spec :on-escaped-field context read-buffer evt-start evt-end escape-char))
 				   ,(mixin-call spec :reset-buffer parser)))
 
 				(:line
@@ -149,10 +149,11 @@
 				(:eof
 				 (return ,(mixin-call spec :on-eof context)))))))))))))
 
-(defmacro csv-mixin (name in parser-functions event-functions csv-chars)
+(defmacro csv-mixin (name in parser-functions event-functions sep quot esc)
   `(csv ,name (,in)
-     ,@(funcall (symbol-function csv-chars))
+     ,@(csv-chars sep quot esc)
      ,@(funcall (symbol-function parser-functions))
      ,@(funcall (symbol-function event-functions))))
 
-(csv-mixin simple-csv->matrix in str-functions vec-accum-functions csv-standard-chars)
+(csv-mixin simple-csv->matrix in str-functions vec-accum-functions #\, #\" #\")
+(csv-mixin odd-tsv->matrix in str-functions vec-accum-functions #\Tab #\" #\\)
