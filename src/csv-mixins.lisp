@@ -90,9 +90,9 @@
 
 (defun csv-table-get-field (table field &optional (row -1))
   (declare (type table csv-table))
-  (let* ((row (if (= -1 row) (csv-table-current table) (aref (csv-table-rows table) row)))
+  (let* ((target (if (= -1 row) (csv-table-current table) (aref (csv-table-rows table) row)))
 	 (column (if (typep field 'integer) field (gethash field (csv-table-headers table)))))
-    (aref row column)))
+    (aref target column)))
 
 (defun csv-table-finalize-current (table)
   (declare (type csv-table table))
