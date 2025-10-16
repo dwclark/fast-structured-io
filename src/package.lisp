@@ -1,6 +1,20 @@
-(defpackage :fast-structured-io
-  (:nicknames :fsio)
+(defpackage :fast-structured-io-utils
+  (:nicknames :fsio-utils)
   (:use #:cl #:alexandria)
-  (:export #:ld
-	   #:ld-str-noop #:ld-str-count-lines #:ld-str->list #:ld-str->list-ints #:ld-str->vec-ints
-	   #:ld-stm-noop #:ld-stm-count-lines #:ld-stm->list #:ld-stm->list-ints #:ld-stm->vec-ints))
+  (:export #:accum-list-init #:accum-list #:accum-list-extract #:replace-symbol
+	   #:replace-symbols #:mixin-or-default #:mixin-type #:mixin-call
+	   #:str-parser #:make-str-parser #:str-functions
+	   #:stm-parser #:stm-parser-new #:stm-functions #:nullable-hash-table))
+  
+(defpackage :fast-structured-io-ld
+  (:nicknames :fsio-ld)
+  (:use #:cl #:alexandria #:fast-structured-io-utils)
+  (:export #:ld #:mixin #:noops #:count-lines #:accum-list-strs #:accum-list-ints #:accum-vec-ints))
+
+(defpackage :fast-structured-io-csv
+  (:nicknames :fsio-csv)
+  (:use #:cl #:alexandria #:fast-structured-io-utils)
+  (:export #:csv #:mixin #:chars #:remove-escapes #:matrix-accum
+	   #:table #:table-new #:table-has-headers #:table-row-count #:table-headers
+	   #:table-transformers #:table-header-map #:table-rows #:table-current
+	   #:table-new #:table-add-field #:table-get-field #:table-finalize-current #:table-accum))

@@ -1,5 +1,29 @@
-(in-package :fast-structured-io)
+(in-package :fast-structured-io-utils)
 
+;; types
+(deftype nullable-hash-table () '(or hash-table null))
+
+;; list helpers
+(declaim (inline accum-list-init accum-list accum-list-extract))
+
+(defun accum-list-init ()
+  (cons nil nil))
+
+(defun accum-list (cell contents)
+  (let ((next-cell (cons contents nil)))
+    (cond
+      ((cdr cell)
+       (setf (cdr (cdr cell)) next-cell)
+       (setf (cdr cell) next-cell))
+      (t
+       (setf (car cell) next-cell)
+       (setf (cdr cell) next-cell)))
+    cell))
+
+(defun accum-list-extract (cell)
+  (car cell))
+	  
+;; mixin helpers
 (defun replace-symbol (lst src target)
   (loop for sub on lst
 	do (let ((item (car sub)))

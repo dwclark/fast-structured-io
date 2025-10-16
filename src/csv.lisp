@@ -1,5 +1,17 @@
-(in-package :fast-structured-io)
+(in-package :fast-structured-io-csv)
 
+;;TODO, there's a mistake in how there's a difference in the parser and the context
+;;with the parser, we always allow an in parameter to be passed to the parser "constructor"
+;;Note how we don't allow any parameters/information for the context "constructor"
+;;this makes it impossible to have anything but a default constructor for the context.
+;;while this is possible because we can always write a specialized function for the constructor
+;;it also means we have to do a completely new mixin.
+;;need to do one of two things:
+;;1. provide a context constructor argument or arguments to allow specifying how
+;;the context constructor should be created
+;;2. Don't provide hooks to call the constructor, require two arguments, one for the
+;;complete parser, the other for the complete context
+;;I'm leaning towards 2.
 (defmacro csv (name (in) &body spec)
   (with-unique-names (parser context start current end evt evt-start evt-end evt-type read-buffer next-event unquoted quoted)
     (let ((func-name (symbol-name name))
@@ -149,11 +161,16 @@
 				(:eof
 				 (return ,(mixin-call spec :on-eof context)))))))))))))
 
-(defmacro csv-mixin (name in parser-functions event-functions sep quot esc)
-  `(csv ,name (,in)
-     ,@(csv-chars sep quot esc)
-     ,@(funcall (symbol-function parser-functions))
-     ,@(funcall (symbol-function event-functions))))
+(defun mixer (sep quot esc parser-impl event-impl)
+  (append (chars sep quot esc) parser-impl event-impl))
+	  
+(defmacro mixin (name in sep quot esc parser-functions event-functions)
+  (let* ((eval-parser (eval parser-functions))
+	 (eval-event (eval event-functions))
+	 (cs (chars `,sep `,quot `,esc))
+	 (mixed (append eval-parser eval-event cs)))
+    (format t "~A~%" mixed)
+    `(csv ,name (,in)
+       ,mixed)))
 
-(csv-mixin simple-csv->matrix in str-functions vec-accum-functions #\, #\" #\")
-(csv-mixin odd-tsv->matrix in str-functions vec-accum-functions #\Tab #\" #\\)
+

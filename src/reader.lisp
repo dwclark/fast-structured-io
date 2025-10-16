@@ -1,4 +1,4 @@
-(in-package :fast-structured-io)
+(in-package :fast-structured-io-utils)
 
 (declaim (inline str-parser-read-buffer str-parser-pos str-parser-advance str-parser-char str-parser-next))
 
@@ -21,9 +21,7 @@
   (str-parser-char parser (str-parser-advance parser)))
 
 (defun str-functions ()
-  '((:parser-type str-parser)
-    (:construct-parser (str) (make-str-parser :read-buffer str :pos 0))
-    (:pos (parser) (str-parser-pos parser))
+  '((:pos (parser) (str-parser-pos parser))
     (:advance (parser) (str-parser-advance parser))
     (:read-buffer (parser) (str-parser-read-buffer parser))
     (:reset-buffer (parser) nil)
@@ -63,13 +61,13 @@
   (setf (schar (stm-parser-read-buffer parser) 0) (stm-parser-current parser))
   (setf (stm-parser-pos parser) 0))
 
+(defun stm-parser-new (stm)
+  (let ((tmp (make-stm-parser :stm stm)))
+    (stm-parser-move-next tmp)
+    tmp))
+
 (defun stm-functions ()
-  '((:parser-type stm-parser)
-    (:construct-parser (stm)
-		       (let ((tmp (make-stm-parser :stm stm)))
-			 (stm-parser-move-next tmp)
-			 tmp))
-    (:pos (parser) (stm-parser-pos parser))
+  '((:pos (parser) (stm-parser-pos parser))
     (:advance (parser) (stm-parser-move-next parser))
     (:read-buffer (parser) (stm-parser-read-buffer parser))
     (:reset-buffer (parser) (stm-parser-reset parser))
