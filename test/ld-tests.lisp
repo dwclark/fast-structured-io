@@ -5,8 +5,12 @@
 (in-package :fast-structured-ld-tests)
 
 (defparameter *nums.txt* (asdf:system-relative-pathname "fast-structured-io" "data/nums.txt"))
+(defparameter *nums-str* (uiop:read-file-string *nums.txt*))
+(defparameter *nums-list* (loop for n from 0 below 1024 collecting n))
 (defparameter *empty.txt* (asdf:system-relative-pathname "fast-structured-io" "data/empty.txt"))
+(defparameter *empty-str* (uiop:read-file-string *empty.txt*))
 (defparameter *singleline.txt* (asdf:system-relative-pathname "fast-structured-io" "data/singleline.txt"))
+(defparameter *singleline-str* (uiop:read-file-string *singleline.txt*))
 
 (def-suite ld-tests)
 (in-suite ld-tests)
@@ -24,17 +28,15 @@
 (mixin ld-stm->vec-ints stm-parser stm-functions (vector fixnum *) accum-vec-ints)
 
 (test test-read-numbers-str
-  (let ((str (uiop:read-file-string *nums.txt*))
-	(nums (loop for n from 0 below 1024 collecting n)))
-    (is (= 1024 (ld-str-count-lines (make-str-parser :read-buffer str :pos 0) 0)))
-    (is (= 0 (ld-str-count-lines (make-str-parser :read-buffer (uiop:read-file-string *empty.txt*) :pos 0) 0)))
-    (is (= 1 (ld-str-count-lines (make-str-parser :read-buffer (uiop:read-file-string *singleline.txt*) :pos 0) 0)))
-    (is (equal nums (ld-str->list-ints (make-str-parser :read-buffer str :pos 0) (accum-list-init))))
-    (is (equal (mapcar #'write-to-string nums)
-	       (ld-str->list (make-str-parser :read-buffer str :pos 0) (accum-list-init))))
-    (is (equalp (make-array 1024 :initial-contents nums)
-		(ld-str->vec-ints (make-str-parser :read-buffer str :pos 0)
-				  (make-array 0 :element-type 'fixnum :adjustable t :fill-pointer t))))))
+  (is (= 1024 (ld-str-count-lines (make-str-parser :read-buffer *nums-str*) 0)))
+  (is (= 0 (ld-str-count-lines (make-str-parser :read-buffer *empty-str*) 0)))
+  (is (= 1 (ld-str-count-lines (make-str-parser :read-buffer *singleline-str*) 0)))
+  (is (equal *nums-list* (ld-str->list-ints (make-str-parser :read-buffer *nums-str*) (accum-list-init))))
+  (is (equal (mapcar #'write-to-string *nums-list*)
+	     (ld-str->list (make-str-parser :read-buffer *nums-str*) (accum-list-init))))
+  (is (equalp (make-array 1024 :initial-contents *nums-list*)
+	      (ld-str->vec-ints (make-str-parser :read-buffer *nums-str*)
+				(make-array 0 :element-type 'fixnum :adjustable t :fill-pointer t)))))
 
 (test test-read-numbers-stm
   (let ((nums (loop for n from 0 below 1024 collecting n)))

@@ -5,6 +5,13 @@
 	(list :quote-char q)
 	(list :escape-char e)))
 
+(defun noops ()
+  '((:on-empty-field (tab) nil)
+    (:on-field (tab buf start end) nil)
+    (:on-escaped-field (tab buf start end escape) nil)
+    (:on-line (tab) nil)
+    (:on-eof (tab) nil)))
+
 (defun remove-escapes (buf start end escape)
   (loop with ret = (make-array 0 :element-type 'character :adjustable t :fill-pointer t)
 	for idx from start below end
@@ -14,9 +21,7 @@
 	finally (return ret)))
 
 (defun matrix-accum ()
-  '((:construct-context () (make-array 1 :adjustable t :fill-pointer t
-					 :initial-contents (list (make-array 0 :adjustable t :fill-pointer t))))
-    (:on-empty-field (vec)
+  '((:on-empty-field (vec)
      (let* ((idx (1- (fill-pointer vec)))
 	    (target-vec (aref vec idx)))
        (vector-push-extend "" target-vec)
@@ -47,6 +52,9 @@
        (if (= 0 (fill-pointer target-vec))
 	   (vector-pop vec))
        vec))))
+
+(declaim (inline table-has-headers table-row-count table-headers table-transformers table-header-map table-rows table-current
+		 table-add-field table-get-row table-get-field))
 
 (defstruct table
   (has-headers nil :type boolean)
@@ -88,6 +96,9 @@
 	  (vector-push-extend (if func (funcall func s) s) target))))
   tab)
 
+(defun table-get-row (tab row)
+  (aref (table-rows tab) row))
+
 (defun table-get-field (tab field &optional (row -1))
   (declare (type tab table))
   (let* ((target (if (= -1 row) (table-current tab) (aref (table-rows tab) row)))
@@ -101,6 +112,7 @@
       (cond ((and (= 0 (table-row-count tab))
 		  (table-has-headers tab)
 		  (eq (table-headers tab) *empty-array*))
+	     (decf (table-row-count tab))
 	     (setf (table-headers tab) (make-array (length row) :element-type 'simple-string :initial-contents row))
 	     (setf (table-header-map tab) (table-new-header-map row)))
 	    
@@ -111,9 +123,8 @@
       (incf (table-row-count tab))))
   tab)
 
-(defun table-accum (&key (has-headers nil) (headers *empty-array*) (transformers *empty-array*))
-  '((:construct-context () (table-new :has-headers has-headers :keep-rows t :headers headers :transformers transformers))
-    (:on-empty-field (tab) (table-add-field tab ""))
+(defun table-accum ()
+  '((:on-empty-field (tab) (table-add-field tab ""))
     (:on-field (tab buf start end) (table-add-field tab (subseq buf start end)))
     (:on-escaped-field (tab buf start end escape) (table-add-field tab (remove-escapes buf start end escape)))
     (:on-line (tab) (table-finalize-current tab))

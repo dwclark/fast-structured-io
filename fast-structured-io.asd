@@ -9,9 +9,9 @@
 	       (:file "src/utils")
 	       (:file "src/reader")
 	       (:file "src/ld-mixins" :depends-on ("src/utils"))
-	       (:file "src/ld" :depends-on ("src/ld-mixins"))))
-	       ;(:file "src/csv-mixins" :depends-on ("src/utils"))
-	       ;(:file "src/csv" :depends-on ("src/csv-mixins"))))
+	       (:file "src/ld" :depends-on ("src/ld-mixins"))
+	       (:file "src/csv-mixins" :depends-on ("src/utils"))
+	       (:file "src/csv" :depends-on ("src/csv-mixins"))))
 
 (asdf:defsystem #:fast-structured-io-tests
   :description "Fast Structured IO Tests"
@@ -22,6 +22,6 @@
 
   :depends-on ("fast-structured-io" "fiveam" "alexandria" "uiop")
 
-  :components ((:file "test/single-line-tests")))
-	       ;(:file "test/csv-tests")))
+  :components ((:file "test/ld-tests")
+	       (:file "test/csv-tests")))
 

@@ -14,7 +14,8 @@
 (defpackage :fast-structured-io-csv
   (:nicknames :fsio-csv)
   (:use #:cl #:alexandria #:fast-structured-io-utils)
-  (:export #:csv #:mixin #:chars #:remove-escapes #:matrix-accum
+  (:export #:csv #:mixin #:chars #:remove-escapes #:noops #:matrix-accum
 	   #:table #:table-new #:table-has-headers #:table-row-count #:table-headers
 	   #:table-transformers #:table-header-map #:table-rows #:table-current
-	   #:table-new #:table-add-field #:table-get-field #:table-finalize-current #:table-accum))
+	   #:table-new #:table-add-field #:table-get-field #:table-finalize-current #:table-accum
+	   #:table-get-row))
