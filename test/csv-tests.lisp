@@ -7,6 +7,7 @@
 (defparameter *people-100* (asdf:system-relative-pathname "fast-structured-io" "data/people-100.csv"))
 (defparameter *people-10000* (asdf:system-relative-pathname "fast-structured-io" "data/people-10000.csv"))
 (defparameter *tsv* (asdf:system-relative-pathname "fast-structured-io" "data/tsv_backescape.csv"))
+(defparameter *tilde-temps* (asdf:system-relative-pathname "fast-structured-io" "data/tilde-temps.csv"))
 
 (def-suite csv-tests)
 (in-suite csv-tests)
@@ -48,6 +49,7 @@
 
 (mixin str-csv->table str-parser str-functions table table-accum)
 (mixin str-csv-noops str-parser str-functions list noops)
+(mixin str-tilde->table str-parser str-functions table table-accum :sep #\~ :quot #\| :esc #\\)
 (mixin stm-tsv->matrix stm-parser stm-functions (vector t *) matrix-accum :sep #\Tab :quot #\' :esc #\\)
 
 (test use-table-people-100
@@ -75,6 +77,17 @@
       (is (= 2 (length matrix)))
       (is (string= "help'" (aref (aref matrix 1) 0)))
       (is (string= "she said, 'hello'" (aref (aref matrix 1) 1))))))
+
+(test parse-tilde-temps
+  (let* ((str (uiop:read-file-string *tilde-temps*))
+	 (parser (make-str-parser :read-buffer str))
+	 (tab (table-new :has-headers t :keep-rows t :transformers (vector #'parse-integer #'read-from-string #'identity)))
+	 (tab (str-tilde->table parser tab)))
+    (is (= 3 (table-row-count tab)))
+    (is (= 1 (table-get-field tab "day" 0)))
+    (is (= 97.5 (table-get-field tab "temp" 0)))
+    (is (string= "it's hot" (table-get-field tab "comment" 0)))
+    ))
 
 (defun parse-speed ()
   (let* ((str (uiop:read-file-string *people-10000*))

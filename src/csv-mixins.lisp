@@ -78,6 +78,7 @@
 
 (defun table-new (&key (has-headers nil) (keep-rows t) (headers *empty-array*) (transformers *empty-array*))
   (make-table :has-headers has-headers
+	      :row-count (if has-headers -1 0)
 	      :headers headers 
 	      :transformers transformers
 	      :header-map (table-new-header-map headers)
@@ -86,14 +87,15 @@
 (defun table-add-field (tab s)
   (declare (type simple-string s))
   (let ((target (table-current tab)))
-    (if (and (zerop (table-row-count tab))
-	     (table-has-headers tab))
+    (if (= -1 (table-row-count tab))
 	(vector-push-extend s target)
 	(let* ((trans (table-transformers tab))
 	       (func (if (not (eq *empty-array* trans))
 			 (aref trans (fill-pointer target))
-			 nil)))
-	  (vector-push-extend (if func (funcall func s) s) target))))
+			 nil))
+	       (val (if func (funcall func s) s)))
+	       
+	  (vector-push-extend val target))))
   tab)
 
 (defun table-get-row (tab row)
@@ -102,25 +104,26 @@
 (defun table-get-field (tab field &optional (row -1))
   (declare (type tab table))
   (let* ((target (if (= -1 row) (table-current tab) (aref (table-rows tab) row)))
-	 (column (if (typep field 'integer) field (gethash field (table-header-map tab)))))
+	 (column (if (typep field 'integer) field (gethash field (table-header-map tab))))
+	 (ret (aref target column)))
     (aref target column)))
 
+;; todo fix missing first row for test
 (defun table-finalize-current (tab)
   (declare (type tab table))
   (let ((row (table-current tab)))
     (when (< 0 (fill-pointer row))
-      (cond ((and (= 0 (table-row-count tab))
+      (cond ((and (= -1 (table-row-count tab))
 		  (table-has-headers tab)
 		  (eq (table-headers tab) *empty-array*))
-	     (decf (table-row-count tab))
 	     (setf (table-headers tab) (make-array (length row) :element-type 'simple-string :initial-contents row))
 	     (setf (table-header-map tab) (table-new-header-map row)))
 	    
 	    ((array-has-fill-pointer-p (table-rows tab))
 	     (vector-push-extend (make-array (length row) :initial-contents row) (table-rows tab))))
       
-      (setf (fill-pointer row) 0)
-      (incf (table-row-count tab))))
+      (incf (table-row-count tab))
+      (setf (fill-pointer row) 0)))
   tab)
 
 (defun table-accum ()

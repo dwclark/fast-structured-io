@@ -19,3 +19,8 @@
 	   #:table-transformers #:table-header-map #:table-rows #:table-current
 	   #:table-new #:table-add-field #:table-get-field #:table-finalize-current #:table-accum
 	   #:table-get-row))
+
+(defpackage :fast-structured-io-ini
+  (:nicknames :fsio-ini)
+  (:use #:cl #:alexandria #:fast-structured-io-utils)
+  (:export #:alists #:make-alists #:alists-add-key #:alists-add-value #:alists-finish-group #:alists-add-group-name #:alists-finish))
