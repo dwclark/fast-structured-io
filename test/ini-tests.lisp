@@ -54,7 +54,6 @@
  	 (parser (make-str-parser :read-buffer str))
   	 (alist (str-ini->alists parser (make-alists))))
     (is (equal '(("one" . "1") ("two" . "2") ("three" . "3")) alist))))
-    
 
 (test w3-schools
   (let* ((str (uiop:read-file-string *w3*))
