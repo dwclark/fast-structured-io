@@ -12,14 +12,6 @@
     (:on-line (tab) nil)
     (:on-eof (tab) nil)))
 
-(defun remove-escapes (buf start end escape)
-  (loop with ret = (make-array 0 :element-type 'character :adjustable t :fill-pointer t)
-	for idx from start below end
-	do (if (char-equal (aref buf idx) escape)
-	       (incf idx))
-	   (vector-push-extend (aref buf idx) ret)
-	finally (return ret)))
-
 (defun matrix-accum ()
   '((:on-empty-field (vec)
      (let* ((idx (1- (fill-pointer vec)))

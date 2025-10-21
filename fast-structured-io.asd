@@ -12,7 +12,8 @@
 	       (:file "src/ld" :depends-on ("src/ld-mixins"))
 	       (:file "src/csv-mixins" :depends-on ("src/utils"))
 	       (:file "src/csv" :depends-on ("src/csv-mixins"))
-	       (:file "src/ini-mixins")))
+	       (:file "src/ini-mixins" :depends-on ("src/utils"))
+	       (:file "src/ini" :depends-on ("src/ini-mixins"))))
 
 (asdf:defsystem #:fast-structured-io-tests
   :description "Fast Structured IO Tests"

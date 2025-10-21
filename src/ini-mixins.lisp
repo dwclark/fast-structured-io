@@ -12,12 +12,14 @@
 
 (defun alists-add-key (a k)
   (declare (type alists a))
+  (format t "in alists-add-key ~A~%" k)
   (let ((cell (alists-k/v a)))
     (setf (car cell) k))
   a)
 
 (defun alists-add-value (a v)
   (declare (type alists a))
+  (format t "in alists-add-value ~A~%" v)
   (let ((cell (alists-k/v a)))
     (setf (cdr cell) v)
     (setf (alists-group a) (accum-list (alists-group a) cell))
@@ -50,10 +52,16 @@
   (alists-extract-global-only (accum-list-extract (alists-all a))))
 
 (defun alists-accum ()
-  '((:on-group (ctx name) (alists-add-group-name ctx name))
-    (:on-key (ctx name) (alists-add-key ctx name))
-    (:on-value (ctx name) (alists-add-value ctx name))
-    (:on-eof (ctx) (alists-finish a))))
+  '((:on-group (al buf start end) (alists-add-group-name al (subseq buf start end)))
+    (:on-key (al buf start end escape) (alists-add-key al
+					(if escape
+					    (remove-escapes buf start end escape)
+					    (subseq buf start end))))
+    (:on-value (al buf start end escape) (alists-add-value al
+					  (if escape
+					      (remove-escapes buf start end escape)
+					      (subseq buf start end))))
+    (:on-eof (al) (alists-finish al))))
 
 (defun hashtables-accum ())
 

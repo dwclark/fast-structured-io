@@ -43,3 +43,28 @@
     
     (is (equalp '(("one" . "1") ("two" . "2") ("three" . "3") ("four" . "4"))
 		(alists-finish holder)))))
+
+(defparameter *only-props* (asdf:system-relative-pathname "fast-structured-io" "data/ini-only-props.ini"))
+(defparameter *w3* (asdf:system-relative-pathname "fast-structured-io" "data/w3schools_sample.ini"))
+
+(mixin str-ini->alists str-parser str-functions alists alists-accum)
+
+(test ini-only-props
+  (let* ((str (uiop:read-file-string *only-props*))
+ 	 (parser (make-str-parser :read-buffer str))
+  	 (alist (str-ini->alists parser (make-alists))))
+    (is (equal '(("one" . "1") ("two" . "2") ("three" . "3")) alist))))
+    
+
+(test w3-schools
+  (let* ((str (uiop:read-file-string *w3*))
+ 	 (parser (make-str-parser :read-buffer str))
+ 	 (alist (str-ini->alists parser (make-alists)))
+	 (should-be '(("http" ("port" . "8080") ("username" . "httpuser"))
+		      ("https" ("port" . "8043") ("username" . "httpsuser"))
+		      ("FTP" ("port" . "8043") ("username" . "ftpuser"))
+		      ("database" ("driverclass" . "com.mysql.jdbc.Driver")
+		       ("dbName" . "mydatabase") ("port" . "3306") ("username" . "root")
+		       ("password" . "secure"))
+		      ("settings" ("enable_ssl" . "true") ("enable_2mf" . "true")))))
+    (is (equal should-be alist))))

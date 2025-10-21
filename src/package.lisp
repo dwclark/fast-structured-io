@@ -23,4 +23,5 @@
 (defpackage :fast-structured-io-ini
   (:nicknames :fsio-ini)
   (:use #:cl #:alexandria #:fast-structured-io-utils)
-  (:export #:alists #:make-alists #:alists-add-key #:alists-add-value #:alists-finish-group #:alists-add-group-name #:alists-finish))
+  (:export #:alists #:make-alists #:alists-add-key #:alists-add-value #:alists-finish-group #:alists-add-group-name #:alists-finish
+	   #:ini #:mixin #:alists-accum))
