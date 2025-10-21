@@ -20,7 +20,7 @@
 (declaim (optimize (speed 0) (debug 3)))
 
 (defmacro ini (name (parser-type context-type) &body spec)
-  (with-unique-names (start current end evt read-buffer next-event is-whitespace consume-whitespace process-group
+  (with-unique-names (start current end evt read-buffer next-event whitespace-p consume-whitespace process-group
 			    consume->eol move consume-quote process-key process-value)
     (let ((func-name (symbol-name name)))
       `(setf (symbol-function (intern ,func-name))
@@ -33,11 +33,11 @@
 			  (format t "in move ~A ~%" ,(mixin-call spec :current-char 'parser))
 			  (setf ,current ,(mixin-call spec :next-char 'parser)))
 			
-			(,is-whitespace () (or (char= #\Space ,current) (char= #\Tab ,current)))
+			(,whitespace-p () (or (char= #\Space ,current) (char= #\Tab ,current)))
 			
 			(,consume-whitespace ()
 			  (format t "in consume-whitespace~%")
-			  (loop while (,is-whitespace)
+			  (loop while (,whitespace-p)
 				do (,move)))
 			
 			(,consume->eol ()
@@ -99,8 +99,8 @@
 					    (error "can't have '#' or ';' in key"))
 
 					   (otherwise
-					    (when (not (,is-whitespace))
-					      (format t "current is ~A, is-whitespace ~A~%" ,current (,is-whitespace))
+					    (when (not (,whitespace-p))
+					      (format t "current is ~A, whitespace-p ~A~%" ,current (,whitespace-p))
 					      (setf end-str ,(mixin-call spec :pos 'parser)))))))))
 
 			(,process-value ()
@@ -139,7 +139,7 @@
 					       (error "in value, '\' can only precede '\' or eol value"))))
 					   
 					   (otherwise
-					    (if (not (,is-whitespace))
+					    (if (not (,whitespace-p))
 						(setf end-str ,(mixin-call spec :pos 'parser)))))))))
 			
 			(,process-group ()
@@ -148,7 +148,7 @@
 			  (let* ((begin-group ,(mixin-call spec :pos 'parser))
 				 (end-group begin-group))
 			    (loop while (not (char= #\] ,current))
-				  do (if (not (,is-whitespace))
+				  do (if (not (,whitespace-p))
 					 (setf end-group ,(mixin-call spec :pos 'parser)))
 				     (,move))
 			    (,consume->eol)
