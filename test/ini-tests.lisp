@@ -44,9 +44,10 @@
     (is (equalp '(("one" . "1") ("two" . "2") ("three" . "3") ("four" . "4"))
 		(alists-finish holder)))))
 
-(defparameter *only-props* (asdf:system-relative-pathname "fast-structured-io" "data/ini-only-props.ini"))
-(defparameter *w3* (asdf:system-relative-pathname "fast-structured-io" "data/w3schools_sample.ini"))
-(defparameter *ugly* (asdf:system-relative-pathname "fast-structured-io" "data/ugly.ini"))
+(defparameter *only-props* (asdf:system-relative-pathname "fast-structured-io" "data/ini/only-props.ini"))
+(defparameter *w3* (asdf:system-relative-pathname "fast-structured-io" "data/ini/w3schools.ini"))
+(defparameter *ugly* (asdf:system-relative-pathname "fast-structured-io" "data/ini/ugly.ini"))
+(defparameter *python* (asdf:system-relative-pathname "fast-structured-io" "data/ini/python.ini"))
 
 (mixin str-ini->alists str-parser str-functions alists alists-accum)
 
@@ -79,3 +80,19 @@ do this?")
 		       ("some \\\"quotes:=" . "some:=\\\" more quotes!!")))))
     (is (equal should-be alist))))
 	 
+(test python
+  (let* ((str (uiop:read-file-string *python*))
+ 	 (parser (make-str-parser :read-buffer str))
+ 	 (alist (str-ini->alists parser (make-alists)))
+	 (should-be '(("Simple Values" ("key" . "value") ("spaces in keys" . "allowed")
+		       ("spaces in values" . "allowed as well")
+		       ("spaces around the delimiter" . "obviously")
+		       ("you can also use" . "to delimit keys from values"))
+		      ("All Values Are Strings" ("values like this" . "1000000") ("or this" . "3.14159265359")
+		       ("are they treated as numbers?" . "no")
+		       ("integers, floats and booleans are held as" . "strings")
+		       ("can use the API to get converted values directly" . "true"))
+		      ("Sections Can Be Indented" ("can_values_be_as_well" . "True")
+		       ("does_that_mean_anything_special" . "False")
+		       ("purpose" . "formatting for readability")))))
+    (is (equal should-be alist))))
