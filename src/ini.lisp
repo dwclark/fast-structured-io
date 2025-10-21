@@ -17,32 +17,26 @@
 ;; 10. Whitespace preceding or following k/v pairs is ignored.
 ;; 11. Whitespace is horizontal tab or space
 
-;; TODO: Finish testing, clean up formats
-(declaim (optimize (speed 0) (debug 3)))
-
 (defmacro ini (name (parser-type context-type) &body spec)
   (with-unique-names (start current end evt read-buffer next-event whitespace-p consume-whitespace process-group
 			    consume->eol move consume-quote process-key process-value)
     (let ((func-name (symbol-name name)))
       `(setf (symbol-function (intern ,func-name))
 	     (lambda (parser context)
-	       ;;(declare (optimize (speed 3) (safety 0)))
+	       (declare (optimize (speed 3) (safety 0)))
 	       (declare (dynamic-extent parser))
 	       (declare (type ,parser-type parser))
 	       (declare (type ,context-type context))
 	       (labels ((,move ()
-			  (format t "in move ~A ~%" ,(mixin-call spec :current-char 'parser))
 			  (setf ,current ,(mixin-call spec :next-char 'parser)))
 			
 			(,whitespace-p () (or (char= #\Space ,current) (char= #\Tab ,current)))
 			
 			(,consume-whitespace ()
-			  (format t "in consume-whitespace~%")
 			  (loop while (,whitespace-p)
 				do (,move)))
 			
 			(,consume->eol ()
-			  (format t "in consume->eol~%")
 			  (loop do (case ,current
 				     (#\Return
 				      (,move)
@@ -58,7 +52,6 @@
 				      (,move)))))
 
 			(,consume-quote (if-not-escaped if-escaped)
-			  (format t "in consume-quote~%")
 			  (,move)
 			  (let* ((evt if-not-escaped)
 				 (begin-str ,(mixin-call spec :pos 'parser)))
@@ -82,15 +75,11 @@
 				       (otherwise (,move))))))
 			
 			(,process-key ()
-			  (format t "in process key~%")
 			  (,consume-whitespace)
 			  (if (char= #\" ,current)
 			      (multiple-value-bind (evt-type begin-str end-str) (,consume-quote :key :escaped-key)
-				(format t "current is ~A~%" ,current)
 				(,consume-whitespace)
-				(format t "current is ~A~%" ,current)
 				(,move)
-				(format t "current is ~A~%" ,current)
 				(case ,current
 				  ((#\= #\:)
 				   (values evt-type begin-str end-str))
@@ -116,11 +105,9 @@
 
 					   (otherwise
 					    (when (not (,whitespace-p))
-					      (format t "current is ~A, whitespace-p ~A~%" ,current (,whitespace-p))
 					      (setf end-str ,(mixin-call spec :pos 'parser)))))))))
 
 			(,process-value ()
-			  (format t "in process value~%")
 			  (,consume-whitespace)
 			  (if (char= #\" ,current)
 			      (multiple-value-bind (evt-type begin-str end-str) (,consume-quote :value :escaped-value)
@@ -159,7 +146,6 @@
 						(setf end-str ,(mixin-call spec :pos 'parser)))))))))
 			
 			(,process-group ()
-			  (format t "in process-group~%")
 			  (,consume-whitespace)
 			  (let* ((begin-group ,(mixin-call spec :pos 'parser))
 				 (end-group begin-group))
@@ -171,7 +157,6 @@
 			    (values :group begin-group (1+ end-group))))
 			
 			(,next-event ()
-			  (format t "in next-event~%")
 			  (,consume-whitespace)
 			  (case ,current
 			    ((#\# #\; #\Return #\Linefeed #\Vt #\Page #\Fs #\Gs #\Rs
@@ -200,7 +185,6 @@
 			    (declare (ignorable ,start ,end))
 			    (let ((,read-buffer ,(mixin-call spec :read-buffer 'parser)))
 			      (declare (ignorable ,read-buffer))
-			      (format t "got ~A ~A ~A~%" ,evt ,start ,end)
 			      (case ,evt
 				(:group
 				 (setf context ,(mixin-call spec :on-group 'context read-buffer start end)))

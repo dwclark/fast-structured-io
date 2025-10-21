@@ -12,14 +12,12 @@
 
 (defun alists-add-key (a k)
   (declare (type alists a))
-  (format t "in alists-add-key ~A~%" k)
   (let ((cell (alists-k/v a)))
     (setf (car cell) k))
   a)
 
 (defun alists-add-value (a v)
   (declare (type alists a))
-  (format t "in alists-add-value ~A~%" v)
   (let ((cell (alists-k/v a)))
     (setf (cdr cell) v)
     (setf (alists-group a) (accum-list (alists-group a) cell))
