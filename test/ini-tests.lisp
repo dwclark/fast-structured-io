@@ -46,6 +46,7 @@
 
 (defparameter *only-props* (asdf:system-relative-pathname "fast-structured-io" "data/ini-only-props.ini"))
 (defparameter *w3* (asdf:system-relative-pathname "fast-structured-io" "data/w3schools_sample.ini"))
+(defparameter *ugly* (asdf:system-relative-pathname "fast-structured-io" "data/ugly.ini"))
 
 (mixin str-ini->alists str-parser str-functions alists alists-accum)
 
@@ -67,3 +68,14 @@
 		       ("password" . "secure"))
 		      ("settings" ("enable_ssl" . "true") ("enable_2mf" . "true")))))
     (is (equal should-be alist))))
+
+(test ugly
+  (let* ((str (uiop:read-file-string *ugly*))
+ 	 (parser (make-str-parser :read-buffer str))
+ 	 (alist (str-ini->alists parser (make-alists)))
+	 (should-be '(("ugly" ("why:all=the\\escapes" . "and here is some 
+line continuations. why do people 
+do this?")
+		       ("some \\\"quotes:=" . "some:=\\\" more quotes!!")))))
+    (is (equal should-be alist))))
+	 

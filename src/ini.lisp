@@ -17,6 +17,7 @@
 ;; 10. Whitespace preceding or following k/v pairs is ignored.
 ;; 11. Whitespace is horizontal tab or space
 
+;; TODO: Finish testing, clean up formats
 (declaim (optimize (speed 0) (debug 3)))
 
 (defmacro ini (name (parser-type context-type) &body spec)
@@ -64,9 +65,20 @@
 			    (loop do (case ,current
 				       (#\"
 					(return (values evt begin-str ,(mixin-call spec :pos 'parser))))
+				       
+				       (#\Nul
+					(error "Got EOF before seeing "\"" char"))
+				       
 				       (#\\
-					(,move) (,move)
-					(setf evt if-escaped))
+					(setf evt if-escaped)
+					(,move)
+					(case ,current
+					  ((#\\ #\")
+					   (,move))
+
+					  (otherwise
+					   (error "only '\' and '\"' allowed to be escaped in quotes"))))
+				       
 				       (otherwise (,move))))))
 			
 			(,process-key ()
@@ -74,7 +86,11 @@
 			  (,consume-whitespace)
 			  (if (char= #\" ,current)
 			      (multiple-value-bind (evt-type begin-str end-str) (,consume-quote :key :escaped-key)
+				(format t "current is ~A~%" ,current)
 				(,consume-whitespace)
+				(format t "current is ~A~%" ,current)
+				(,move)
+				(format t "current is ~A~%" ,current)
 				(case ,current
 				  ((#\= #\:)
 				   (values evt-type begin-str end-str))
@@ -189,11 +205,17 @@
 				(:group
 				 (setf context ,(mixin-call spec :on-group 'context read-buffer start end)))
 
-				((:key :escaped-key)
-				 (setf context ,(mixin-call spec :on-key 'context read-buffer start end (if (eq :escaped-key evt) #\\ nil))))
+				(:key
+				 (setf context ,(mixin-call spec :on-key 'context read-buffer start end nil)))
+
+				(:escaped-key
+				 (setf context ,(mixin-call spec :on-key 'context read-buffer start end #\\)))
 				
-				((:value :escaped-value)
-				 (setf context ,(mixin-call spec :on-value 'context read-buffer start end (if (eq :escaped-key evt) #\\ nil))))
+				(:value
+				 (setf context ,(mixin-call spec :on-value 'context read-buffer start end nil)))
+
+				(:escaped-value
+				 (setf context ,(mixin-call spec :on-value 'context read-buffer start end #\\)))
 				
 				(:eol nil)
 				

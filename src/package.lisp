@@ -4,7 +4,8 @@
   (:export #:accum-list-init #:accum-list #:accum-list-extract #:replace-symbol
 	   #:replace-symbols #:mixin-or-default #:mixin-type #:mixin-call
 	   #:str-parser #:make-str-parser #:str-functions
-	   #:stm-parser #:stm-parser-new #:stm-functions #:nullable-hash-table))
+	   #:stm-parser #:stm-parser-new #:stm-functions #:nullable-hash-table
+	   #:remove-escapes))
   
 (defpackage :fast-structured-io-ld
   (:nicknames :fsio-ld)
@@ -14,7 +15,7 @@
 (defpackage :fast-structured-io-csv
   (:nicknames :fsio-csv)
   (:use #:cl #:alexandria #:fast-structured-io-utils)
-  (:export #:csv #:mixin #:chars #:remove-escapes #:noops #:matrix-accum
+  (:export #:csv #:mixin #:chars #:noops #:matrix-accum
 	   #:table #:table-new #:table-has-headers #:table-row-count #:table-headers
 	   #:table-transformers #:table-header-map #:table-rows #:table-current
 	   #:table-new #:table-add-field #:table-get-field #:table-finalize-current #:table-accum
