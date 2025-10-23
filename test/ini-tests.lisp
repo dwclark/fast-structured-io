@@ -50,12 +50,20 @@
 (defparameter *python* (asdf:system-relative-pathname "fast-structured-io" "data/ini/python.ini"))
 
 (mixin str-ini->alists str-parser str-functions alists alists-accum)
+(mixin str-ini->hashtable str-parser str-functions hashtable hashtable-accum)
 
 (test ini-only-props
   (let* ((str (uiop:read-file-string *only-props*))
  	 (parser (make-str-parser :read-buffer str))
   	 (alist (str-ini->alists parser (make-alists))))
     (is (equal '(("one" . "1") ("two" . "2") ("three" . "3")) alist))))
+
+(test ini-only-props-hashtable
+  (let* ((str (uiop:read-file-string *only-props*))
+ 	 (parser (make-str-parser :read-buffer str))
+  	 (table (str-ini->hashtable parser (hashtable-init)))
+	 (should-be (alist-hash-table '(("one" . "1") ("two" . "2") ("three" . "3")) :test #'equal)))
+    (is (equalp should-be table))))
 
 (test w3-schools
   (let* ((str (uiop:read-file-string *w3*))
@@ -68,7 +76,27 @@
 		       ("dbName" . "mydatabase") ("port" . "3306") ("username" . "root")
 		       ("password" . "secure"))
 		      ("settings" ("enable_ssl" . "true") ("enable_2mf" . "true")))))
-    (is (equal should-be alist))))
+    (is (equalp should-be alist))))
+
+(test w3-schools-hashtable
+  (let* ((str (uiop:read-file-string *w3*))
+ 	 (parser (make-str-parser :read-buffer str))
+ 	 (table (str-ini->hashtable parser (hashtable-init)))
+	 (alist-should-be '(("http" ("port" . "8080") ("username" . "httpuser"))
+			    ("https" ("port" . "8043") ("username" . "httpsuser"))
+			    ("FTP" ("port" . "8043") ("username" . "ftpuser"))
+			    ("database" ("driverclass" . "com.mysql.jdbc.Driver")
+			     ("dbName" . "mydatabase") ("port" . "3306") ("username" . "root")
+			     ("password" . "secure"))
+			    ("settings" ("enable_ssl" . "true") ("enable_2mf" . "true"))))
+	 (should-be (loop with tmp = (make-hash-table :test #'equal)
+			  for entry in alist-should-be
+			  do (setf (gethash (car entry) tmp) (alist-hash-table (rest entry) :test #'equal))
+			  finally (return tmp))))
+
+    (loop for key being the hash-keys in should-be
+	  do (is (gethash key table))
+	     (is (equalp (gethash key should-be) (gethash key table))))))
 
 (test ugly
   (let* ((str (uiop:read-file-string *ugly*))

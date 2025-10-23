@@ -61,6 +61,48 @@
 					      (subseq buf start end))))
     (:on-eof (al) (alists-finish al))))
 
-(defun hashtables-accum ())
+(defun hashtable-init ()
+  (let* ((table (make-hash-table :test #'equal)))
+    (setf (gethash :current-group table) "")
+    (setf (gethash :current-key table) "")
+    (setf (gethash "" table) (make-hash-table :test #'equal))
+    table))
+
+(defun hashtable-accum ()
+  '((:on-group (table buf start end)
+     (let ((group-name (subseq buf start end)))
+       (setf (gethash :current-group table) group-name)
+       (setf (gethash group-name table) (make-hash-table :test #'equal))
+       table))
+    
+    (:on-key (table buf start end escape)
+     (progn
+       (setf (gethash :current-key table)
+	     (if escape (remove-escapes buf start end escape) (subseq buf start end)))
+       table))
+    
+    (:on-value (table buf start end escape)
+     (let* ((key (gethash :current-key table))
+	    (value (if escape (remove-escapes buf start end escape) (subseq buf start end)))
+	    (group-name (gethash :current-group table))
+	    (group-hash (gethash group-name table)))
+       (setf (gethash key group-hash) value)
+       table))
+
+    (:on-eof (table)
+     (progn
+       (remhash :current-group table)
+       (remhash :current-key table)
+       (let ((default-table (gethash "" table))
+	     (count (hash-table-count table)))
+	 (cond ((and (= 1 count) (< 0 (hash-table-count default-table)))
+		default-table)
+
+	       ((= 0 (hash-table-count default-table))
+		(remhash "" table)
+		table)
+	       
+	       (t
+		table)))))))
 
    
