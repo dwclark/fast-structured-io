@@ -27,3 +27,9 @@
   (:export #:alists #:make-alists #:alists-add-key #:alists-add-value #:alists-finish-group
 	   #:alists-add-group-name #:alists-finish #:hashtable-init #:hashtable-accum
 	   #:ini #:mixin #:alists-accum))
+
+(defpackage :fast-structured-io-properties
+  (:nicknames :fsio-properties)
+  (:use #:cl #:alexandria #:fast-structured-io-utils)
+
+  )

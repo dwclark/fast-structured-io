@@ -101,4 +101,3 @@
       (setf (fsio-utils::str-parser-pos parser) 0))
     
     (format t "finished. total mb: ~A, total rows: ~A~%" (float (/ (* times len) (* 1024 1024))) (* times 10000))))
-
