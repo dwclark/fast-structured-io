@@ -31,4 +31,4 @@
 (defpackage :fast-structured-io-properties
   (:nicknames :fsio-properties)
   (:use #:cl #:alexandria #:fast-structured-io-utils)
-  (:export #:whitespace-p #:remove-properties-escapes))
+  (:export #:remove-properties-escapes))

@@ -1,24 +1,32 @@
-(in-package :fast-structured-io-properties)
+p(in-package :fast-structured-io-properties)
 
 (defmacro properties (name (parser-type context-type) &body spec)
-  (with-unique-names (current start end evt read-buffer process-key process-value process-comment move
-			      next-event skip-whitespace-key skip-whitespace-value skip-newline last-evt check-escpape)
+  (with-unique-names (current read-buffer process-key process-value process-comment move
+			      next-event skip-whitespace-key skip-whitespace-value skip-newline check-escpape
+			      key-evt key-start key-end value-evt value-start value-end)
     (let ((func-name (symbol-name name)))
       `(setf (symbol-function (intern ,func-name))
 	     (lambda (parser context)
 	       ;;(declare (optimize (speed 3) (safety 0)))
-	       (let* ((,last-evt (the symbol :value))
-		      (,start (the fixnum 0))
-		      (,current (the character ,(mixin-call spec :current-char 'parser))))
-
+	       (let* ((,current (the character ,(mixin-call spec :current-char 'parser)))
+		      (,key-evt :none)
+		      (,key-start 0)
+		      (,key-end 0)
+		      (,value-evt :none)
+		      (,value-start 0)
+		      (,value-end 0))
+		 
 		 (declare (dynamic-extent parser))
 		 (declare (type ,parser-type parser))
 		 (declare (type ,context-type context))
+		 (declare (type symbol ,key-evt ,value-evt))
+		 (declare (type fixnum ,key-start ,key-end ,value-start ,value-end))
+		 
 		 (labels ((,move () (setf ,current ,(mixin-call spec :next-char 'parser)))
-
+			  
 			  (,skip-newline ()
 			    (,move)
-			    (loop while (or (char= #\Newline ,current) (char= #\Return ,current))
+			    (loop while (eol-p ,current)
 				  do (,move)))
 
 			  (,check-escape ()
@@ -40,6 +48,7 @@
 			    (loop do (case ,current
 				       ((#\Space #\Tab #\Formfeed #\Newline #\Return) (,move))
 				       ((#\# #\!) (,process-comment))
+				       (#\Nul (setf ,key-evt :eof) (return))
 				       (otherwise (return)))))
 
 			  (,skip-whitespace-value ()
@@ -48,62 +57,74 @@
 				       (otherwise (return)))))
 
 			  (,process-key ()
-			    (let ((,start (the fixnum ,(mixin-call spec :pos 'parser)))
-				  (evt-type :key))
-			      (loop do (case ,current
-					 (#\\
-					  (setf evt-type :escaped-key)
-					  (,move)
-					  (case ,current
-					    ((#\Newline #\Return) (,skip-newline))
-					    (#\u (,check-escape))
-					    (otherwise (,move))))
+			    (setf ,key-start ,(mixin-call spec :pos 'parser)
+				  ,key-evt :key)
+			    (loop do (case ,current
+				       (#\\
+					(setf ,key-evt :escaped-key)
+					(,move)
+					(case ,current
+					  ((#\Newline #\Return) (,skip-newline))
+					  (#\u (,check-escape))
+					  (otherwise (,move))))
+				       
+				       ((#\Space #\Tab #\Formfeed #\: #\=)
+					(setf ,key-end ,(mixin-call spec :pos 'parser))
+					(return))
 					 
-					 ((#\Space #\Tab #\Formfeed #\: #\=)
-					  (return (values :evt-type ,start ,(mixin-call spec :pos 'parser))))
-
-					 (otherwise (,move))))))
+				       (otherwise (,move)))))
 			  
 			  (,process-value ()
 			    (,skip-whitespace-value)
-			    (let ((,start (the fixnum ,(mixin-call spec :pos 'parser)))
-				  (evt-type :value))
-			      (loop do (case ,current
-					 (#\\
-					  (setf evt-type :escaped-value)
-					  (,move)
-					  ((#\Newline #\Return)
-					   (,skip-newline)
-					   (,skip-whitespace-value))
-					  (#\u (,check-escape))
-					  (otherwise (,move)))
-
-					 ((#\Newline #\Return)
-					  (let ((evt-end (the fixnum ,(mixin-call spec :pos 'parser))))
-					    (,skip-newline)
-					    (return (values :evt-type ,start evt-end))))
-
-					 (otherwise (,move))))))
-
+			    (setf ,value-start ,(mixin-call spec :pos 'parser)
+				  ,value-evt :value)
+			    (loop do (case ,current
+				       (#\\
+					(setf ,value-evt :escaped-value)
+					(,move)
+					((#\Newline #\Return)
+					 (,skip-newline)
+					 (,skip-whitespace-value))
+					(#\u (,check-escape))
+					(otherwise (,move)))
+				       
+				       ((#\Newline #\Return)
+					(setf ,value-end ,(mixin-call spec :pos 'parser))
+					(,skip-newline)
+					(return))
+				       
+				       (otherwise (,move)))))
+			  
 			  (,next-event ()
-			    (case ,last-evt
-			      ((:value :escaped-value)
-			       (,skip-whitespace-key)
-			       (,process-key))
-			      ((:key :escaped-key)
-			       (,move)
-			       (,process-value)))))
+			    ;;Should only eof in skip-whitespace key
+			    ;;or at the end of process-values
+			    ;;anywhere else will be an error
+			    (,skip-whitespace-key)
+			    (if (eq :eof ,key-type)
+				(return-from ,next-event))
+			    
+			    (,process-key)
+			    (,move)
+			    (,procees-values)))
 		   
-		   (loop do (multiple-value-bind (,evt ,start ,end) (,next-event)
-			      (declare (type symbol ,evt))
-			      (declare (type fixnum ,start ,end))
-			      (declare (ignorable ,start ,end))
-			      
-			      (case ,evt
-				(:line
-				 (let ((,read-buffer ,(mixin-call spec :read-buffer 'parser)))
-				   (declare (ignorable ,read-buffer))
-				   (setf context ,(mixin-call spec :on-line 'context read-buffer start end))
-				   ,(mixin-call spec :reset-buffer 'parser)))
-				(:eof
-				 (return ,(mixin-call spec :on-eof 'context)))))))))))))
+		   (loop do (,next-event)
+			    (cond ((eq ,value-evt :eof)
+				   (error "found eol while looking for value"))
+
+				  ((eq ,key-evt :eof)
+				   (return ,(mixin-call spec :on-eof 'context)))
+
+				  (t
+				   (let ((,read-buffer ,(mixin-call spec :read-buffer 'parser)))
+				     (declare (ignorable ,read-buffer))
+				     (ecase ,key-evt
+				       (:key
+					(setf context ,(mixin-call spec :on-key 'context read-buffer start end nil)))
+				       (:escaped-key
+					(setf context ,(mixin-call spec :on-key 'context read-buffer start end t))))
+				     (ecase ,value-evt
+				       (:value
+					(setf context ,(mixin-call spec :on-value 'context read-buffer start end nil)))
+				       (:escaped-value
+					(setf context ,(mixin-call spec :on-value 'context read-buffer start end t))))
+				     ,(mixin-call spec :reset-buffer 'parser))))))))))))

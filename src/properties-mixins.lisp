@@ -3,11 +3,15 @@
 (defparameter *props-loc* "/home/david/common-lisp/fast-structured-io/data/properties/one.properties")
 (defparameter *props-str* (uiop:read-file-string *props-loc*))
 
-(declaim (inline whitespace-p))
+(declaim (inline whitespace-p eol-p))
 
 (defun whitespace-p (c)
   (declare (type character c))
   (or (char= #\Space c) (char= #\Tab c) (char= #\Formfeed c)))
+
+(defun eol-p (c)
+  (declare (type character c))
+  (or (char= #\Newline c) (char= #\Return c)))
 
 (defun remove-properties-escapes (buf start end is-value)
   (declare (optimize (speed 0) (debug 3)))
