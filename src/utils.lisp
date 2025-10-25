@@ -4,7 +4,7 @@
 (deftype nullable-hash-table () '(or hash-table null))
 
 ;; list helpers
-(declaim (inline accum-list-init accum-list accum-list-extract))
+(declaim (inline accum-list-init accum-list accum-list-extract unicode-escape->char))
 
 (defun accum-list-init ()
   (cons nil nil))
@@ -70,3 +70,6 @@
 	       (incf idx))
 	   (vector-push-extend (aref buf idx) ret)
 	finally (return ret)))
+
+(defun unicode-escape->char (buf start)
+  (code-char (parse-integer buf :start (+ 1 start) :end (+ 5 start) :radix 16)))

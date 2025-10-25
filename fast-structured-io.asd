@@ -28,5 +28,6 @@
 
   :components ((:file "test/ld-tests")
 	       (:file "test/csv-tests")
-	       (:file "test/ini-tests")))
+	       (:file "test/ini-tests")
+	       (:file "test/properties-tests")))
 

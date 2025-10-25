@@ -1,9 +1,6 @@
 (in-package :fast-structured-io-properties)
 
-(defconstant +WHITESPACE+ '(#\Space #\Tab))
-(defconstant +BEGIN-VALUE+ '(#\Space #\Tab #\Formfeed #\: #\=))
-
-(defmacro ld (name (parser-type context-type) &body spec)
+(defmacro properties (name (parser-type context-type) &body spec)
   (with-unique-names (current start end evt read-buffer process-key process-value process-comment move
 			      next-event skip-whitespace-key skip-whitespace-value skip-newline last-evt check-escpape)
     (let ((func-name (symbol-name name)))
@@ -110,4 +107,3 @@
 				   ,(mixin-call spec :reset-buffer 'parser)))
 				(:eof
 				 (return ,(mixin-call spec :on-eof 'context)))))))))))))
-  
