@@ -71,5 +71,11 @@
 	   (vector-push-extend (aref buf idx) ret)
 	finally (return ret)))
 
+(defun unicode-escape-p (buf start)
+  (dotimes (i 4)
+    (if (not (digit-char-p (schar buf (+ i 1 start))))
+	(return-from unicode-escape-p nil)))
+  t)
+
 (defun unicode-escape->char (buf start)
   (code-char (parse-integer buf :start (+ 1 start) :end (+ 5 start) :radix 16)))

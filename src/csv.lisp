@@ -17,7 +17,7 @@
 		 (declare (type ,context-type context))
 		 (declare (type ,start fixnum))
 		 (declare (type ,current character))
-
+		 
 		 (labels ((,unquoted ()
 			    (setf ,current ,(mixin-call spec :next-char 'parser))
 			    (loop do

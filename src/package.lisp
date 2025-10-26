@@ -5,7 +5,7 @@
 	   #:replace-symbols #:mixin-or-default #:mixin-type #:mixin-call
 	   #:str-parser #:make-str-parser #:str-functions
 	   #:stm-parser #:stm-parser-new #:stm-functions #:nullable-hash-table
-	   #:remove-escapes #:unicode-escape->chars))
+	   #:remove-escapes #:unicode-escape->char #:unicode-escape-p))
   
 (defpackage :fast-structured-io-ld
   (:nicknames :fsio-ld)
@@ -31,4 +31,4 @@
 (defpackage :fast-structured-io-properties
   (:nicknames :fsio-properties)
   (:use #:cl #:alexandria #:fast-structured-io-utils)
-  (:export #:remove-properties-escapes))
+  (:export #:remove-properties-escapes #:properties #:mixin #:hash-table-accum #:noops))

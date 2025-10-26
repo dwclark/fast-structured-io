@@ -13,7 +13,7 @@
   (declare (type character c))
   (or (char= #\Newline c) (char= #\Return c)))
 
-(defun remove-properties-escapes (buf start end is-value)
+(defun remove-properties-escapes (buf start end)
   (declare (optimize (speed 0) (debug 3)))
   (let ((ret (make-array 0 :element-type 'character :adjustable t :fill-pointer t))
 	(idx start)
@@ -23,9 +23,8 @@
 	       (if (< idx end)
 		   (setf c (schar buf idx))))
 	     (skip-whitespace ()
-	       (if is-value
-		   (loop while (whitespace-p c)
-			 do (move)))))
+	       (loop while (whitespace-p c)
+		     do (move))))
       (loop while (< idx end)
 	    do (case c
 		 (#\\
@@ -47,3 +46,19 @@
 		 
 		 (otherwise (vector-push-extend c ret) (move)))))
     ret))
+
+(defun hash-table-accum ()
+  '((:on-eof (table) table)
+    (:on-line (table buf key-start key-end key-escape value-start value-end value-escape)
+     (let ((key (if key-escape
+		    (remove-properties-escapes buf key-start key-end)
+		    (subseq buf key-start key-end)))
+	   (val (if value-escape
+		    (remove-properties-escapes buf value-start value-end)
+		    (subseq buf value-start value-end))))
+       (setf (gethash key table) val)
+       table))))
+
+(defun noops ()
+  '((:on-eof (table) nil)
+    (:on-line (table buf key-start key-end key-escape value-start value-end value-escape) nil)))
