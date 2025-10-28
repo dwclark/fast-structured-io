@@ -122,8 +122,8 @@
 			      (declare (type symbol ,evt))
 			      (declare (type fixnum ,evt-start ,evt-end))
 			      (declare (ignorable ,evt-start ,evt-end))
-
-			      (case ,evt
+			      
+			      (ecase ,evt
 				(:empty-field
 				 (setf context ,(mixin-call spec :on-empty-field 'context))
 				 (if (= 2 ,evt-start)

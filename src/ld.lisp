@@ -40,7 +40,7 @@
 				       
 				     (otherwise (setf ,current ,(mixin-call spec :next-char 'parser)))))))
 		   
-		   (loop do (case (,next-event)
+		   (loop do (ecase (,next-event)
 			      (:line
 			       (let ((,read-buffer ,(mixin-call spec :read-buffer 'parser)))
 				 (declare (ignorable ,read-buffer))

@@ -185,7 +185,7 @@
 			    (declare (ignorable ,start ,end))
 			    (let ((,read-buffer ,(mixin-call spec :read-buffer 'parser)))
 			      (declare (ignorable ,read-buffer))
-			      (case ,evt
+			      (ecase ,evt
 				(:group
 				 (setf context ,(mixin-call spec :on-group 'context read-buffer start end)))
 
