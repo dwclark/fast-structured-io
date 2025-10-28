@@ -9,37 +9,38 @@
 	       (declare (dynamic-extent parser))
 	       (declare (type ,parser-type parser))
 	       (declare (type ,context-type context))
-	       (labels ((,next-event ()
-			  (let ((,start (the fixnum ,(mixin-call spec :pos 'parser)))
-				(,current (the character ,(mixin-call spec :current-char 'parser))))
+	       (let ((,start 0)
+		     (,end 0)
+		     (,current #\Nul))
+		 (declare (type fixnum ,start ,end))
+		 (declare (type character ,current))
+		 
+		 (labels ((,next-event ()
+			    (setf ,start ,(mixin-call spec :pos 'parser)
+				  ,current ,(mixin-call spec :current-char 'parser))
 			    (loop do (case ,current
 				       (#\Return
-					(let ((,end (the fixnum ,(mixin-call spec :pos 'parser))))
-					  (if (char= #\Linefeed ,(mixin-call spec :next-char 'parser))
-					      ,(mixin-call spec :advance 'parser))
-					  (return (values :line ,start ,end))))
+					(setf ,end ,(mixin-call spec :pos 'parser))
+					(if (char= #\Linefeed ,(mixin-call spec :next-char 'parser))
+					    ,(mixin-call spec :advance 'parser))
+					(return :line))
 				       
 				       ;; See https://docs.python.org/3/library/stdtypes.html#str.splitlines
 				       ;; for behavior of python splitlines, which this emulates
 				       ((#\Linefeed #\Vt #\Page #\Fs #\Gs #\Rs #\Next-Line #\LINE_SEPARATOR #\PARAGRAPH_SEPARATOR)
-					(let ((,end (the fixnum ,(mixin-call spec :pos 'parser))))
-					  ,(mixin-call spec :advance 'parser)
-					  (return (values :line ,start ,end))))
+					(setf ,end ,(mixin-call spec :pos 'parser))
+					,(mixin-call spec :advance 'parser)
+					(return :line))
 				       
 				       (#\Nul
-					(let ((,end (the fixnum ,(mixin-call spec :pos 'parser))))
-					  (if (= ,start ,end)
-					      (return (values :eof -1 -1))
-					      (return (values :line ,start ,end)))))
+					(setf ,end ,(mixin-call spec :pos 'parser))
+					(if (= ,start ,end)
+					    (return :eof)
+					    (return :line)))
 				       
-				       (otherwise (setf ,current ,(mixin-call spec :next-char 'parser))))))))
-		 
-		 (loop do (multiple-value-bind (,evt ,start ,end) (,next-event)
-			    (declare (type symbol ,evt))
-			    (declare (type fixnum ,start ,end))
-			    (declare (ignorable ,start ,end))
-			    
-			    (case ,evt
+				     (otherwise (setf ,current ,(mixin-call spec :next-char 'parser)))))))
+		   
+		   (loop do (case (,next-event)
 			      (:line
 			       (let ((,read-buffer ,(mixin-call spec :read-buffer 'parser)))
 				 (declare (ignorable ,read-buffer))

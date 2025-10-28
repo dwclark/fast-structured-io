@@ -4,10 +4,10 @@
 
 (in-package :fast-structured-csv-tests)
 
-(defparameter *people-100* (asdf:system-relative-pathname "fast-structured-io" "data/people-100.csv"))
-(defparameter *people-10000* (asdf:system-relative-pathname "fast-structured-io" "data/people-10000.csv"))
-(defparameter *tsv* (asdf:system-relative-pathname "fast-structured-io" "data/tsv_backescape.csv"))
-(defparameter *tilde-temps* (asdf:system-relative-pathname "fast-structured-io" "data/tilde-temps.csv"))
+(defparameter *people-100* (asdf:system-relative-pathname "fast-structured-io" "data/csv/people-100.csv"))
+(defparameter *people-10000* (asdf:system-relative-pathname "fast-structured-io" "data/csv/people-10000.csv"))
+(defparameter *tsv* (asdf:system-relative-pathname "fast-structured-io" "data/csv/tsv_backescape.csv"))
+(defparameter *tilde-temps* (asdf:system-relative-pathname "fast-structured-io" "data/csv/tilde-temps.csv"))
 
 (def-suite csv-tests)
 (in-suite csv-tests)

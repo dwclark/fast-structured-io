@@ -4,13 +4,15 @@
 
 (in-package :fast-structured-ld-tests)
 
-(defparameter *nums.txt* (asdf:system-relative-pathname "fast-structured-io" "data/nums.txt"))
+(defparameter *nums.txt* (asdf:system-relative-pathname "fast-structured-io" "data/ld/nums.txt"))
 (defparameter *nums-str* (uiop:read-file-string *nums.txt*))
 (defparameter *nums-list* (loop for n from 0 below 1024 collecting n))
-(defparameter *empty.txt* (asdf:system-relative-pathname "fast-structured-io" "data/empty.txt"))
+(defparameter *empty.txt* (asdf:system-relative-pathname "fast-structured-io" "data/ld/empty.txt"))
 (defparameter *empty-str* (uiop:read-file-string *empty.txt*))
-(defparameter *singleline.txt* (asdf:system-relative-pathname "fast-structured-io" "data/singleline.txt"))
+(defparameter *singleline.txt* (asdf:system-relative-pathname "fast-structured-io" "data/ld/singleline.txt"))
 (defparameter *singleline-str* (uiop:read-file-string *singleline.txt*))
+(defparameter *people-10000* (asdf:system-relative-pathname "fast-structured-io" "data/csv/people-10000.csv"))
+(defparameter *people-10000-str* (uiop:read-file-string *people-10000*))
 
 (def-suite ld-tests)
 (in-suite ld-tests)
@@ -60,3 +62,15 @@
       (is (equalp (make-array 1024 :initial-contents nums)
 		  (ld-stm->vec-ints (stm-parser-new fstream)
 				    (make-array 0 :element-type 'fixnum :adjustable t :fill-pointer t)))))))
+
+(defun parse-speed ()
+  (let ((parser (make-str-parser :read-buffer *people-10000-str*))
+	(size (length *people-10000-str*))
+	(times 1000))
+    (dotimes (i times)
+      (declare (ignore i))
+      (ld-str-noop parser nil)
+      (setf (fsio-utils::str-parser-pos parser) 0))
+
+    (format t "total size: ~A mb, lines:~A~%" (/ (* 1.0 times size) (* 1024 1024)) (* times 10000))))
+

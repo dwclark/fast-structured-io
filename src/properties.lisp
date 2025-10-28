@@ -8,7 +8,7 @@
       `(setf (symbol-function (intern ,func-name))
 	     (lambda (parser context)
 	       (declare (optimize (speed 3) (safety 0)))
-	       (let* ((,current (the character ,(mixin-call spec :current-char 'parser)))
+	       (let* ((,current ,(mixin-call spec :current-char 'parser))
 		      (,key-escape nil)
 		      (,key-start 0)
 		      (,key-end 0)
@@ -19,6 +19,7 @@
 		 (declare (dynamic-extent parser))
 		 (declare (type ,parser-type parser))
 		 (declare (type ,context-type context))
+		 (declare (type character ,current))
 		 (declare (type boolean ,key-escape ,value-escape))
 		 (declare (type fixnum ,key-start ,key-end ,value-start ,value-end))
 		 (declare (inline ,move ,skip-newline ,check-escape ,skip-past-eol ,skip-whitespace-key
